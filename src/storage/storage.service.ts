@@ -4,6 +4,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 
 import { ConfigService } from '@nestjs/config';
@@ -43,6 +44,29 @@ export class StorageService implements OnModuleInit {
         ContentType: contentType,
       }),
     );
+  }
+
+  async get(key: string): Promise<{
+    buffer: Buffer;
+    contentType: string;
+  }> {
+    const result = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+
+    if (!result.Body) {
+      throw new Error('Image body is empty');
+    }
+
+    const buffer = Buffer.from(await result.Body.transformToByteArray());
+
+    return {
+      buffer,
+      contentType: result.ContentType ?? 'application/octet-stream',
+    };
   }
 
   async delete(key: string) {

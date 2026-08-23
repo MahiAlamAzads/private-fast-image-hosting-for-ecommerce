@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
-
-import { StorageService } from '../storage/storage.service';
+import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
 export class ImagesService {
@@ -17,6 +16,10 @@ export class ImagesService {
     this.port = this.config.getOrThrow<string>('PORT');
   }
 
+  async getImage(filename: string) {
+    return this.storage.get(`images/${filename}`);
+  }
+
   async upload(file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Image is required');
@@ -27,7 +30,7 @@ export class ImagesService {
     // todo: here we will take image quality from users
     const buffer = await sharp(file.buffer)
       .webp({
-        quality: 85,
+        quality: 45,
       })
       .toBuffer();
 
