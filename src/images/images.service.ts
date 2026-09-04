@@ -1,8 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-import sharp from 'sharp';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
+
 import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
@@ -27,10 +27,10 @@ export class ImagesService {
 
     const id = randomUUID();
 
-    // todo: here we will take image quality from users
+    // TODO: Take image quality from the user in the future.
     const buffer = await sharp(file.buffer)
       .webp({
-        quality: 45,
+        quality: 100,
       })
       .toBuffer();
 

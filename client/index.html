@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .previewImage {
+        width: 300px;
+        height: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h3>Upload Your images and videos:</h3>
+      <input id="mediaUpload" type="file" multiple accept="image/*, video/*" />
+      <p>Selected files will appear below:</p>
+    </div>
+
+    <script>
+      const media = document.getElementById('mediaUpload');
+      let container = document.createElement('div');
+      container.id = 'previews';
+
+      media.addEventListener('change', (e) => {
+        console.log(e.target.files);
+        let listHTML = '<ul>';
+        Array.prototype.forEach.call(e.target.files, function (file) {
+          let fileReader = new FileReader();
+          fileReader.onload = function (event) {
+            if (file.type.startsWith('image/')) {
+              // For images
+              let img = document.createElement('img');
+              img.className = 'previewImage';
+              img.src = event.target.result;
+              container.innerHTML += '<div><img src="' + img.src + '"></div>';
+            } else if (file.type.startsWith('video/')) {
+              // For videos
+              let video = document.createElement('video');
+              video.width = 320;
+              video.className = 'previewVideo';
+              video.controls = true;
+              video.src = event.target.result;
+              container.innerHTML +=
+                '<div><video src="' +
+                video.src +
+                '" width="320"></video></div>';
+            }
+          };
+          fileReader.readAsDataURL(file);
+        });
+        container.style.display = 'block';
+        document.body.appendChild(container);
+      });
+    </script>
+  </body>
+</html>
