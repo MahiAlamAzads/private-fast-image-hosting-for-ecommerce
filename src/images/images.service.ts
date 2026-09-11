@@ -59,4 +59,18 @@ export class ImagesService {
       url: `http://localhost:${this.port}/images/${id}.webp`,
     };
   }
+
+  /**
+   * Uploads multiple images in a single request.
+   *
+   * Each file is normalized to WebP and stored under a unique UUID key.
+   * Returns an array of upload results, one per file.
+   */
+  async uploadMany(files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one image is required');
+    }
+
+    return Promise.all(files.map((file) => this.upload(file)));
+  }
 }

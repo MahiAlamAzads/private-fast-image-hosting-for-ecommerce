@@ -7,6 +7,7 @@ import {
   Post,
   Res,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,7 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 import { ApiKeyGuard } from 'src/auth/guards/api-key.guard';
 import { ImagesService } from './images.service';
@@ -66,6 +67,45 @@ export class ImagesController {
   })
   async upload(@UploadedFile() file: Express.Multer.File) {
     return this.imagesService.upload(file);
+  }
+
+  @Post('upload-many')
+  @UseGuards(ApiKeyGuard)
+  @ApiSecurity('api-key')
+  @UseInterceptors(FilesInterceptor('images', 10))
+  @ApiOperation({
+    summary: 'Bulk upload images',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+      required: ['images'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Images uploaded successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'At least one image is required',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid API key',
+  })
+  async uploadMany(@UploadedFiles() files: Express.Multer.File[]) {
+    return this.imagesService.uploadMany(files);
   }
 
   @Delete()
