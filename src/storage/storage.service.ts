@@ -4,6 +4,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
 
@@ -20,6 +21,7 @@ export class StorageService implements OnModuleInit {
     this.client = new S3Client({
       endpoint: `http://${this.config.getOrThrow('MINIO_ENDPOINT')}:${this.config.getOrThrow('MINIO_PORT')}`,
 
+      // MinIO accepts any valid S3 region, but the AWS SDK requires one.
       region: 'us-east-1',
 
       credentials: {
@@ -27,6 +29,8 @@ export class StorageService implements OnModuleInit {
         secretAccessKey: this.config.getOrThrow('MINIO_SECRET_KEY'),
       },
 
+      // Required for MinIO and other S3-compatible services that do not support
+      // AWS virtual-hosted bucket URLs by default.
       forcePathStyle: true,
     });
   }
@@ -46,6 +50,12 @@ export class StorageService implements OnModuleInit {
     );
   }
 
+  /**
+   * Reads an object by its storage key.
+   *
+   * The key is the full path inside the bucket, for example
+   * `images/avatar.webp` or `uploads/2026/09/profile.webp`.
+   */
   async get(key: string): Promise<{
     buffer: Buffer;
     contentType: string;
@@ -74,6 +84,28 @@ export class StorageService implements OnModuleInit {
       new DeleteObjectCommand({
         Bucket: this.bucket,
         Key: key,
+      }),
+    );
+  }
+
+  /**
+   * Deletes multiple objects in a single S3 API call.
+   *
+   * The AWS SDK automatically chunks the request into batches of 1000 keys,
+   * which is the S3 limit for a single DeleteObjects request.
+   */
+  async deleteMany(keys: string[]) {
+    if (keys.length === 0) {
+      return;
+    }
+
+    await this.client.send(
+      new DeleteObjectsCommand({
+        Bucket: this.bucket,
+        Delete: {
+          Objects: keys.map((key) => ({ Key: key })),
+          Quiet: true,
+        },
       }),
     );
   }

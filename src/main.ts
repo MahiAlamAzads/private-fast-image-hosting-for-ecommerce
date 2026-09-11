@@ -6,6 +6,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Keep the documented security scheme name in sync with @ApiSecurity() so
+  // Swagger UI can send authenticated upload requests.
   const config = new DocumentBuilder()
     .setTitle('My API')
     .setDescription('API documentation')

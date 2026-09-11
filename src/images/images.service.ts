@@ -16,8 +16,23 @@ export class ImagesService {
     this.port = this.config.getOrThrow<string>('PORT');
   }
 
+  /**
+   * Images are stored under a fixed prefix so the bucket can also host other
+   * object types without filename collisions.
+   */
   async getImage(filename: string) {
     return this.storage.get(`images/${filename}`);
+  }
+
+  /**
+   * Deletes multiple images by their filenames.
+   *
+   * Filenames are mapped to their full storage keys (e.g. `images/<id>.webp`)
+   * before being passed to the storage layer.
+   */
+  async deleteMany(filenames: string[]) {
+    const keys = filenames.map((filename) => `images/${filename}`);
+    await this.storage.deleteMany(keys);
   }
 
   async upload(file: Express.Multer.File) {
@@ -27,10 +42,10 @@ export class ImagesService {
 
     const id = randomUUID();
 
-    // TODO: Take image quality from the user in the future.
+    // Normalize uploads to WebP to keep responses small and cache-friendly.
     const buffer = await sharp(file.buffer)
       .webp({
-        quality: 100,
+        quality: 80,
       })
       .toBuffer();
 

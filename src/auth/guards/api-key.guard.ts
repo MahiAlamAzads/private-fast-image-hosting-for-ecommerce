@@ -14,6 +14,8 @@ export class ApiKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
 
+    // Protect write routes with a shared API key while keeping public image
+    // reads cacheable and simple.
     const apiKey = request.headers['x-api-key'];
 
     const validKey = this.config.getOrThrow<string>('IMAGE_API_KEY');

@@ -1,5 +1,7 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -66,6 +68,48 @@ export class ImagesController {
     return this.imagesService.upload(file);
   }
 
+  @Delete()
+  @UseGuards(ApiKeyGuard)
+  @ApiSecurity('api-key')
+  @ApiOperation({
+    summary: 'Bulk delete images',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        filenames: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['uuid1.webp', 'uuid2.webp'],
+        },
+      },
+      required: ['filenames'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Images deleted successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'filenames array is required',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid API key',
+  })
+  async deleteMany(@Body('filenames') filenames: string[]) {
+    await this.imagesService.deleteMany(filenames);
+    return { deleted: filenames.length };
+  }
+
+  /**
+   * Streams the optimized image bytes directly from object storage.
+   *
+   * Uploaded images are immutable because filenames use generated UUIDs, so
+   * clients and CDNs can safely cache successful responses for a long time.
+   */
   @Get(':filename')
   @ApiOperation({
     summary: 'Get an image',
